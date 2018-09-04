@@ -1,3 +1,5 @@
+#include "glob_var.h"
+
 char ** tokenizer(char *line , int type)
 {
     //printf("Called\n"); 

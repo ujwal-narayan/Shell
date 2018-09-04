@@ -1,3 +1,7 @@
+#include "glob_var.h"
+#include "run.h"
+#include "execute_builtin.h"
+
 int execute(char **args , int do_in_background)
 {
     int builtin;

@@ -3,11 +3,8 @@
 #include "get_input.h"
 #include "tokenizer.h"
 #include "execute.h"
-#include "global_var.h"
+#include "glob_var.h"
 
-#define RED "\033[0;31m"
-#define RESET "\033[0m"
-#define CHILDPROCESSESLEN 128
 
 
 
@@ -47,7 +44,7 @@ int shell_launch()
         }
         if(strcmp(home_dir , curr_dir) == 0)
         {
-            display[0] = '~';
+            display[0] = home_sym;
             display[1] = '\0';
         }
         else

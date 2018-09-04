@@ -16,6 +16,8 @@
 #include <assert.h>
 #include <errno.h>
 #include<fcntl.h>
+#include<wait.h>
+
 #define home_sym '~'
 #define RED "\033[0;31m"
 #define RESET "\033[0m"
@@ -25,7 +27,7 @@
 
 //FIX RUN : PRINTING ERROR CODE FOR BG PROX
 //PINFO , LS , RUN ,HANDLER
-
+char ** tokenizer(char *line , int type);
 
 pid_t childProcesses[CHILDPROCESSESLEN] = {};
 char childNames[CHILDPROCESSESLEN][256] = {};
@@ -41,6 +43,65 @@ int strstrlen(char **arr)
     return i;
 }
 
+int clck(char **args)
+{
+    char fd[256] ;
+    char path [] = "/proc/driver/rtc" ;
+    FILE *status = fopen(path,"r");
+
+    if (status == NULL)
+    {
+        perror (RED "Clock file open error" RESET);
+        return 1;
+    }
+    int  i = 0,num;
+    num = atoi(args[2]);
+    while(i<num)
+    {
+        
+        status = fopen(path,"r");
+        if ( status== NULL)
+        {
+        perror (RED "Clock file open error" RESET);
+        return 1;
+        }
+        
+    char* ret = fgets(fd,256,status);
+    if (ret == NULL)
+    {
+        perror(RED "fgest error" RESET);
+        return 1;
+    }
+    char ** asd= tokenizer(fd,2);
+    printf("%s , ",asd[2]);
+    ret = fgets(fd,256,status);
+    if (ret == NULL)
+    {
+        perror(RED "fgest error" RESET);
+        return 1;
+    }
+    asd= tokenizer(fd,2);
+    printf("%s\n",asd[2]);
+    sleep(num);
+    fclose(status);
+    i++;
+    return 0;
+
+    }
+
+
+}
+int remindMe(char *timer , char* mes)
+{
+    int time = atoi(timer);
+    int pid = fork();
+    if(pid == 0)
+    {
+        sleep(time);
+        printf("\nReminder: %s \n", mes);
+    }
+    return 0;
+}
 /*
 """"
 An attempt to keep a history of directories a user went to so that instead of just the previous directory the user can go to n previous directories.
@@ -629,7 +690,7 @@ int run(char **args,int bg)
                
                 if (execvp(args[0], args) == -1)
                        {
-                        perror(RED "Error" RESET);
+                        
                         return 1;
                        } 
                 exit(EXIT_FAILURE);
@@ -685,6 +746,10 @@ void doneProcesses()
                 }
         }
 }
+int remindmee(char **args)
+{
+    remindMe(args[1],args[2]);return 0;
+}
 
 int execute_builtin(char **args)
 {
@@ -713,6 +778,15 @@ int execute_builtin(char **args)
     }
     else if (strcmp(args[0],"exit")==0)
         exit(0);
+    else if (strcmp(args[0],"remindme")==0)
+        remindmee(args);
+    else if (strcmp(args[0],"clock")==0)
+        clck(args);
+    else if (strcmp(args[0],"help")==0)
+    {
+        printf("Help yourself\n");
+        return 0;
+    }
 
     return -73;
 

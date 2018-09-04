@@ -1,9 +1,6 @@
-#define RED "\033[0;31m"
-#define RESET "\033[0m"
-#define CHILDPROCESSESLEN 128
-#include "global_var.h"
-extern pid_t childProcesses[CHILDPROCESSESLEN] = {};
-extern char childNames[CHILDPROCESSESLEN][256] = {};
+
+#include "glob_var.h"
+
 
 void doneProcesses()
 {
