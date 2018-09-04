@@ -1,14 +1,17 @@
-#include<string.h>
-#include<stdlib.h>
-#include<stdio.h>
-
-char ** tokenizer(char *line )
+char ** tokenizer(char *line , int type)
 {
     //printf("Called\n"); 
     int size = BUFF_SIZE;
     char ** tokens = malloc(sizeof(char*)*size);
-    char *token  ;
-    char *delimiter = ";";
+    char *token , *delimiter;
+    if ( type == 1)
+    {
+        delimiter = ";";
+    }
+    if (type == 2)
+    {
+        delimiter = " \t\r\n\v\a";
+    }
     int i;
     if (tokens == NULL)
     {

@@ -16,12 +16,12 @@
 #include <assert.h>
 #include <errno.h>
 #include<fcntl.h>
-
+#define home_sym '~'
 #define RED "\033[0;31m"
 #define RESET "\033[0m"
 #define CHILDPROCESSESLEN 128
 
-int BUFF_SIZE = 100 ; 
+#define BUFF_SIZE 100 
 
 //FIX RUN : PRINTING ERROR CODE FOR BG PROX
 //PINFO , LS , RUN ,HANDLER
@@ -29,6 +29,7 @@ int BUFF_SIZE = 100 ;
 
 pid_t childProcesses[CHILDPROCESSESLEN] = {};
 char childNames[CHILDPROCESSESLEN][256] = {};
+int run(char **args,int bg);
 
 int strstrlen(char **arr)
 {
@@ -169,7 +170,7 @@ int display_home_converter(char display[], char home_dir[])
     }
     if (is_parent_of_home == 1)
         return 0;
-    temp[0]= '~';
+    temp[0]= home_sym;
     while (i<size)
     {
         temp[j] = display[i];
@@ -243,8 +244,7 @@ int pinfo(char **args)
         int c, L = 0;
         pid_t Id;
 
-        //2 cases, one passable argument
-        //Clear buffer space before this
+        
 
         if (args[1] == NULL)
                 Id = getpid();
@@ -308,40 +308,47 @@ int pinfo(char **args)
         {
                 buffer[L] = '\0';       
 
-                //mod_cwd_rel(buffer);
                 display_home_converter(buffer,home_dir);
                 printf("Executable Path -- %s\n", buffer);
         }
         return 0;
     
 }
+
 int ls(char **args)
 {
         DIR *mydir;
         struct dirent *myfile;
         struct stat fileStat;
-        int flagL, flagA, count;
-        count = flagL = flagA = 0;
+        int detect_long, detect_hidden, count;
+        count = detect_long = detect_hidden = 0;
         int s = strstrlen(args);
         int i;
         for (i = 1; i < s; i++)
         {
                 if (strcmp(args[i], "-l") == 0)
                 {
-                        flagL = 1;
+                        detect_long = 1;
                         count++;
                 }
 
-                if (strcmp(args[i], "-a") == 0)
+                else if (strcmp(args[i], "-a") == 0)
                 {
-                        flagA = 1;
+                        detect_hidden = 1;
                         count++;
                 }
 
-                if (strcmp(args[i], "-la") == 0 || strcmp(args[i], "-al") == 0)
+                else if (strcmp(args[i], "-la") == 0 )
                 {
-                        flagA = 1;
-                        flagL = 1;
+                        detect_hidden = 1;
+                        detect_long = 1;
+                        count++;
+                }
+
+                else if (strcmp(args[i], "-al") == 0)
+                {
+                        detect_hidden = 1;
+                        detect_long = 1;
                         count++;
                 }
         }
@@ -354,14 +361,13 @@ int ls(char **args)
                     perror( RED "Error in opening the directory\n" RESET);
                     return 0;
                 }
-                if (flagL == 1)
+                if (detect_long == 1)
                 {
-                        // if(s-count>1)
-                        //   printf("%s:\n",args[i]);
+                       
                         char buf[512];
                         while ((myfile = readdir(mydir)) != NULL)
                         {
-                                if (flagA == 0)
+                                if (detect_hidden == 0)
                                 {
                                         if (myfile->d_name[0] == '.')
                                                 continue;
@@ -377,16 +383,50 @@ int ls(char **args)
                                 struct group *user_group = getgrgid((long)fileStat.st_gid);
                                 struct passwd *user_name = getpwuid((long)fileStat.st_uid);
 
-                                printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
-                                printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
-                                printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
-                                printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
-                                printf((fileStat.st_mode & S_IRGRP) ? "r" : "-");
-                                printf((fileStat.st_mode & S_IWGRP) ? "w" : "-");
-                                printf((fileStat.st_mode & S_IXGRP) ? "x" : "-");
-                                printf((fileStat.st_mode & S_IROTH) ? "r" : "-");
-                                printf((fileStat.st_mode & S_IWOTH) ? "w" : "-");
-                                printf((fileStat.st_mode & S_IXOTH) ? "x" : "-");
+                                
+
+                                if((S_ISDIR(fileStat.st_mode)))
+                                    printf("d");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IRUSR)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IWUSR)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IXUSR)
+                                    printf("x");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IRGRP)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IWGRP)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IXGRP)
+                                    printf("x");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IROTH)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IWOTH)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IXOTH)
+                                    printf("x");
+                                else
+                                    printf("-");
+
+
 
                                 printf("  %lu", fileStat.st_nlink);
 
@@ -394,33 +434,28 @@ int ls(char **args)
 
                                 printf("%lu", fileStat.st_size);
 
-                                char *foo = ctime(&fileStat.st_ctime);
-                                foo[strlen(foo) - 1] = 0;
+                                char *varia = ctime(&fileStat.st_ctime);
+                                varia[strlen(varia) - 1] = 0;
 
-                                printf(" %s", foo);
+                                printf(" %s", varia);
 
                                 printf(" %s \n", myfile->d_name);
 
-                                // free(foo);
-                                // free(user_group);
-                                // free(user_name);
+                                
                         }
                 }
 
                 else
                 {
-                        // if(s-count>1)
-                        // printf("%s:\n",args[i]);
-                        //char buf[512];
+                       
                         while ((myfile = readdir(mydir)) != NULL)
                         {
-                                if (flagA == 0)
+                                if (detect_hidden == 0)
                                 {
                                         if (myfile->d_name[0] == '.')
                                                 continue;
                                 }
-                                //  sprintf(buf, "%s/%s", argv[1], myfile->d_name);
-                                //  stat(buf, &fileStat);
+                                
                                 printf(" %s \n", myfile->d_name);
                         }
                 }
@@ -428,18 +463,24 @@ int ls(char **args)
 
         else
         {
-                int i;
-                for (i = 1; i < s; i++)
+                int i = 1;
+                while(i<s)
                 {
-                        //  printf("else condition");
+                       
                         if (args[i][0] == '-')
                         {
-                                //printf("%s\n",args[i]);
-                                continue;
+                              
+                                printf("This is not supported as a builtin command. Do you still want to run it (y?)");
+                                char y ;
+                                scanf("%c",&y);
+                                if(y == 'y')
+                                    run(args,0);
+                                else
+                                    return 0;
                         }
-                        //  printf("not continue %s \n",args[i]);
+                      
                         char tmp[512] = "";
-                        if (args[i][0] == '~')
+                        if (args[i][0] == home_sym )
                         {
                                 const struct passwd *pw = getpwuid(getuid());
                                 const char *HOME = pw->pw_dir;
@@ -457,25 +498,25 @@ int ls(char **args)
                                 mydir = opendir(args[i]);
                                 if(mydir == NULL)
                                 {
-                                    perror( RED "Error in opening the directory\n" RESET);
+                                    perror( RED "Error in opening the directory.\n" RESET);
                                     return 0;
                                 }
 
-                        //  printf("seg ?");
+                       
 
-                        if (flagL == 1)
+                        if (detect_long == 1)
                         {
                                 if (s - count > 2)
                                         printf("%s:\n", args[i]);
                                 char buf[512];
                                 while ((myfile = readdir(mydir)) != NULL)
                                 {
-                                        if (flagA == 0)
+                                        if (detect_hidden == 0)
                                         {
                                                 if (myfile->d_name[0] == '.')
                                                         continue;
                                         }
-                                        if (args[i][0] == '~')
+                                        if (args[i][0] == home_sym )
                                                 sprintf(buf, "%s/%s", tmp, myfile->d_name);
                                         else
                                                 sprintf(buf, "%s/%s", args[i], myfile->d_name);
@@ -484,16 +525,48 @@ int ls(char **args)
                                         struct group *user_group = getgrgid((long)fileStat.st_gid);
                                         struct passwd *user_name = getpwuid((long)fileStat.st_uid);
 
-                                        printf((S_ISDIR(fileStat.st_mode)) ? "d" : "-");
-                                        printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
-                                        printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
-                                        printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
-                                        printf((fileStat.st_mode & S_IRGRP) ? "r" : "-");
-                                        printf((fileStat.st_mode & S_IWGRP) ? "w" : "-");
-                                        printf((fileStat.st_mode & S_IXGRP) ? "x" : "-");
-                                        printf((fileStat.st_mode & S_IROTH) ? "r" : "-");
-                                        printf((fileStat.st_mode & S_IWOTH) ? "w" : "-");
-                                        printf((fileStat.st_mode & S_IXOTH) ? "x" : "-");
+
+                                if((S_ISDIR(fileStat.st_mode)))
+                                    printf("d");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IRUSR)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IWUSR)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IXUSR)
+                                    printf("x");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IRGRP)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IWGRP)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IXGRP)
+                                    printf("x");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IROTH)
+                                    printf("r");
+                                else
+                                    printf("-");
+                                if (fileStat.st_mode & S_IWOTH)
+                                    printf("w");
+                                else
+                                    printf("-");
+                                if(fileStat.st_mode & S_IXOTH)
+                                    printf("x");
+                                else
+                                    printf("-");
+
 
                                         printf("  %lu", fileStat.st_nlink);
 
@@ -501,16 +574,15 @@ int ls(char **args)
 
                                         printf("%lu", fileStat.st_size);
 
-                                        char *foo = ctime(&fileStat.st_ctime);
-                                        foo[strlen(foo) - 1] = 0;
+                                        char *varia = ctime(&fileStat.st_ctime);
+                                        i++;
+                                        varia[strlen(varia) - 1] = 0;
 
-                                        printf(" %s", foo);
+                                        printf(" %s", varia);
 
                                         printf(" %s \n", myfile->d_name);
 
-                                        // free(foo);
-                                        // free(user_group);
-                                        // free(user_name);
+                                        
                                 }
                         }
 
@@ -518,16 +590,13 @@ int ls(char **args)
                         {
                                 if (s - count > 2)
                                         printf("%s:\n", args[i]);
-                                //char buf[512];
                                 while ((myfile = readdir(mydir)) != NULL)
                                 {
-                                        if (flagA == 0)
+                                        if (detect_hidden == 0)
                                         {
                                                 if (myfile->d_name[0] == '.')
                                                         continue;
                                         }
-                                        //  sprintf(buf, "%s/%s", argv[1], myfile->d_name);
-                                        //  stat(buf, &fileStat);
                                         printf(" %s \n", myfile->d_name);
                                 }
                         }
@@ -535,8 +604,6 @@ int ls(char **args)
         }
 
         closedir(mydir);
-        // free(mydir);
-        // free(myfile);
         return 0;
 }
 
@@ -546,30 +613,46 @@ int run(char **args,int bg)
         if (args[0] == NULL)
                 return 1;
       
-        if (strcmp(args[0], "exit") == 0)
-                return 0;
+        
+
+        int len = strstrlen(args);
         int i;
         pid_t pid;
-        int status, len = strstrlen(args);
+        int status;
+
         pid = fork();
         if (pid == 0)
         {
-                //Child process
+                //Child 
                 if (strcmp(args[len - 1], "&") == 0)
-                        args[len - 1] = NULL;
+                        args[len - 1] = "";
                
                 if (execvp(args[0], args) == -1)
-                        perror("Error");
+                       {
+                        perror(RED "Error" RESET);
+                        return 1;
+                       } 
                 exit(EXIT_FAILURE);
         }
         else if (pid < 0)
-                perror("Error forking");
+                {
+                    perror(RED "Error forking" RESET);
+                    return 1;
+                }   
         else
         {
-                //Parent process
-                if (strcmp(args[len - 1], "&") == 0)
+                //Parent 
+                if (strcmp(args[len - 1], "&") != 0)
                 {
-                        printf("Process ID of %s: %d\n", args[0], pid);
+                    do
+                        {
+                                waitpid(pid, &status, WUNTRACED);
+                        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+                       
+                }
+                else
+                {
+                     //printf("Process ID of %s: %d\n", args[0], pid);
                         int i;
                         for (i = 0; i < CHILDPROCESSESLEN; i++)
                                 if (childProcesses[i] == -73)
@@ -579,13 +662,7 @@ int run(char **args,int bg)
                                         break;
                                 }
                         waitpid(pid, &status, WNOHANG);
-                }
-                else
-                {
-                        do
-                        {
-                                waitpid(pid, &status, WUNTRACED);
-                        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
+                        
                 }
         }
         return 1;
@@ -608,41 +685,7 @@ void doneProcesses()
                 }
         }
 }
-/*
-void handler(int sig)
-{
-  pid_t pid;
-  pid = wait(NULL);
-  if(pid!=-1)
-    printf("\n[%d] done.\n", pid);
-    
-}
 
-int run(char **args, int bgflag)
-{
-  int pid, wpid;
-  int status;
-  signal(SIGCHLD, handler);
-
-  pid = fork();
-  if (pid == 0) {
-    if (execvp(args[0], args) == -1) {
-      perror(RED " error while executing " RESET);
-    }
-    exit(1);
-  } else if (pid < 0) {
-    perror( RED "error while forking " RESET);
-  }
-  if (!bgflag) {
-    waitpid(pid, &status, WUNTRACED);
-  } else {
-    do_in_background++;
-    printf("[%d] %d\n", do_in_background, pid);
-    waitpid(pid, &status, WNOHANG);
-  }
-return 1;
-}
-*/
 int execute_builtin(char **args)
 {
     //printf("Hi %s\n",args[0]);
@@ -668,6 +711,8 @@ int execute_builtin(char **args)
     {
         return ls(args);
     }
+    else if (strcmp(args[0],"exit")==0)
+        exit(0);
 
     return -73;
 
@@ -769,7 +814,7 @@ int shell_launch()
         }
         if(strcmp(home_dir , curr_dir) == 0)
         {
-            display[0] = '~';
+            display[0] = home_sym;
             display[1] = '\0';
         }
         else
