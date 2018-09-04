@@ -2,8 +2,6 @@
 #include<string.h>
 int main()
 {
-    if(strcmp("cd..","cd")==0)
-        printf("Hi\n");
-   
+    printf("%c",34);
     return 0 ;
 }
