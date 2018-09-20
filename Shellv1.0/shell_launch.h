@@ -52,7 +52,7 @@ int shell_launch()
             strcpy(display,curr_dir);
             display_home_converter(display,home_dir);
         }
-        printf("<%s@%s:%s>",user_name,host_name,display);
+        printf(CYAN "<" BLUE "%s" CYAN "@" YELLOW "%s" CYAN ":%s>" RESET,user_name,host_name,display);
         line = get_input();
         if(line == NULL)
         {

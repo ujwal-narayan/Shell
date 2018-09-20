@@ -1,6 +1,8 @@
 #include "glob_var.h"
 int clck(char **args)
 {
+   if (args[1] == NULL)
+        return 0;
     char fd[256] ;
     char path [] = "/proc/driver/rtc" ;
     FILE *status = fopen(path,"r");
