@@ -44,38 +44,60 @@ int cd_cmd(char **args , char* cwd , char* home_dir)
    
     return ret;
 }
-void echo(char** cmd_tokens, int tokens, char* cmd) {
-        if(tokens > 1 && cmd_tokens[1][0] == '-') {
-                run_cmd(cmd_tokens);
-                return;
-        }
-        int i, len = 0, in_quote = 0, flag = 0;
-        char buf[MAX_BUF_LEN] = "\0";
-        for(i = 0; isspace(cmd[i]); i++);
-        if(i == 0) i = 5;
-        else i += 4;
-        for(; cmd[i] != '\0' ; i++) {
-                if(cmd[i] == '"') {
-                        in_quote = 1 - in_quote;
-                }    
-                else if(in_quote == 0 && (isspace(cmd[i])) && flag == 0) {
-                        flag = 1;
-                        if(len > 0) buf[len++] = ' ';
+int echo(char *line)
+{
+        int i;
+        int flg1 = 0;
+        int flg2 = 0;
+        int bufsize = MAX_BUF_LEN, pos = 0, ch;
+        char *buffer = (char *)malloc(sizeof(char) * bufsize);
+        line = &line[5];
+        do
+        {
+                int len = strlen(line);
+                for (i = 0; i < len; i++)
+                {
+                        ch = line[i];
+                        if (ch == '\'')
+                        {
+                                if (flg2)
+                                        buffer[pos++] = ch;
+                                else
+                                        flg1 = !flg1;
+                        }
+                        else if (ch == '\"')
+                        {
+                                if (flg1)
+                                        buffer[pos++] = ch;
+                                else
+                                        flg2 = !flg2;
+                        }
+                        else
+                                buffer[pos++] = ch;
+                        if (pos >= bufsize)
+                        {
+                                bufsize *= MAX_BUF_LEN;
+                                buffer = (char *)realloc(buffer, bufsize);
+                        }
                 }
-                else if(in_quote == 1 || !isspace(cmd[i])) buf[len++] = cmd[i];
-                if(!isspace(cmd[i]) && flag == 1) flag = 0;
-        }
-        if(in_quote == 1) {
-                fprintf(stderr, "Missing quotes\n");
-                return;
-        }
-        else printf("%s\n", buf);
+                if (flg1 || flg2)
+                {
+                        printf("> ");
+                        line = readLine();
+                }
+                buffer[pos++] = '\n';
+                // strcat(friend, "\n");
+        } while (flg1 || flg2);
+        buffer[pos] = 0;
+        printf("%s", buffer);
+        free(buffer);
+        buffer = NULL;
+        return 1;
 }
 
+
 void pwd(char** cmd_tokens) {
-        char pwd_dir[MAX_BUF_LEN];
-        getcwd(pwd_dir, MAX_BUF_LEN - 1); 
-        if(cmd_tokens[1] == NULL) printf("%s\n", pwd_dir);
+        if(cmd_tokens[1] == NULL) printf("%s\n", curr_dir);
         else run_cmd(cmd_tokens);
 }
 
@@ -88,8 +110,8 @@ void jobs() {
         }
 }
 
-void kjob(int tokens, char** cmd_tokens) {
-        if(tokens != 3) {
+void kjob(char** cmd_tokens) {
+        if(cmd_tokens[0] == NULL || cmd_tokens[1] == NULL || cmd_tokens[2] == NULL) {
                 fprintf(stderr, "Invalid usage of kjob!\n");
                 return;
         }
@@ -130,8 +152,8 @@ void overkill() {
         }
 }
 
-void fg(int tokens, char** cmd_tokens) {
-        if(tokens != 2) {
+void fg(char** cmd_tokens) {
+        if( cmd_tokens[0]==NULL || cmd_tokens[1] == NULL) {
                 fprintf(stderr, "Invalid usage of fg");
                 return;
         }       
@@ -189,7 +211,7 @@ int clock(char **args)
         perror(RED "fgest error" RESET);
         return 1;
     }
-    char ** asd= tokenizer(fd,2);
+    char** asd= tokenizer(fd,2);
     printf("%s , ",asd[2]);
     ret = fgets(fd,256,status);
     if (ret == NULL)

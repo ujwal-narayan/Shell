@@ -76,22 +76,18 @@ void rem_proc(int pid) {
                 }
         }
 }
-int  execute_buitlin(int tokens, char** cmd_tokens, char* cmd_copy) {
-        if(strcmp(cmd_tokens[0], "fg\0") == 0 ) fg(tokens, cmd_tokens);
+int  execute_buitlin( char** cmd_tokens, char* cmd_copy) {
+        if(strcmp(cmd_tokens[0], "fg\0") == 0 ) fg( cmd_tokens);
         else if(strcmp(cmd_tokens[0], "overkill\0") == 0) overkill();
         else if(strcmp(cmd_tokens[0], "jobs\0") == 0) jobs();
-        else if(strcmp(cmd_tokens[0], "kjob\0") == 0) kjob(tokens, cmd_tokens);
-        else if(strcmp(cmd_tokens[tokens-1], "&\0") == 0) {
-                cmd_tokens[tokens - 1] = NULL;
-                is_bg = 1;
-                run_cmd(cmd_tokens);        // for running background process
-        }
+        else if(strcmp(cmd_tokens[0], "kjob\0") == 0) kjob( cmd_tokens);
+        
         else if(strcmp(cmd_tokens[0], "cd\0") == 0) cd_cmd(cmd_tokens, curr_dir, home_dir);
         else if(strcmp(cmd_tokens[0], "pwd\0") == 0) pwd(cmd_tokens);
         else if(strcmp(cmd_tokens[0], "quit\0") == 0) {
                 _exit(0);
         }
-        else if(strcmp(cmd_tokens[0], "echo\0") == 0) echo(cmd_tokens, tokens, cmd_copy);
+        else if(strcmp(cmd_tokens[0], "echo\0") == 0) echo( cmd_copy);
         else if(strcmp(cmd_tokens[0], "pinfo\0") == 0) pinfo(cmd_tokens);
         else if(strcmp(cmd_tokens[0],"clock\0")==0) clock(cmd_tokens);
         else if(strcmp(cmd_tokens[0],"remindme\0")==0) remindme(cmd_tokens);
@@ -103,11 +99,19 @@ int  execute_buitlin(int tokens, char** cmd_tokens, char* cmd_copy) {
 
 void normal_cmd(int tokens, char** cmd_tokens, char* cmd_copy) {
         if(tokens > 0) {
-                int is_builtin =0;
-                is_builtin = execute_buitlin(tokens,cmd_tokens, cmd_copy);
+                if(strcmp(cmd_tokens[tokens-1], "&\0") == 0) {
+                cmd_tokens[tokens - 1] = NULL;
+                is_bg = 1;
+                run_cmd(cmd_tokens);        // for running background process
+                }
+                else 
+                {
+                        int is_not_builtin =0;
+                is_not_builtin = execute_buitlin(cmd_tokens, cmd_copy);
                 
-                if(is_builtin)
+                if(is_not_builtin)
                         run_cmd(cmd_tokens);
+                }
         }
         free(cmd_tokens);
 }
@@ -117,7 +121,15 @@ void redi_and_pipi_cmd(char* cmd) {
 
         num_pipe = 0;
 
-        parse_for_piping(cmd);
+        char* copy = strdup(cmd);
+        char* token;
+        int tok = 0;
+        token = strtok(copy, "|");
+        while(token!= NULL) {
+                pipe_cmds[tok++] = token;
+                token = strtok(NULL, "|");
+        }
+        num_pipe = tok;
 
         int* pipes = (int* )malloc(sizeof(int)*(2*(num_pipe - 1)));
 

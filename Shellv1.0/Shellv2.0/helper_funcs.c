@@ -43,7 +43,7 @@ int strstrlen(char **arr)
     }
     return i;
 }
-char ** tokenizer(char *line , int type)
+char** tokenizer(char *line , int type)
 {
     //printf("Called\n"); 
     int size = MAX_BUF_LEN;
@@ -90,4 +90,29 @@ char ** tokenizer(char *line , int type)
        }
     }
     return tokens;
+}
+char *readLine()
+{
+        int bufsize = MAX_BUF_LEN, pos = 0, ch;
+        char *buffer = (char *)malloc(sizeof(char) * bufsize);
+        if (!buffer)
+                perror(RED "Buffer could not be declared " RESET);
+        while (1)
+        {
+                ch = getchar();
+                if (ch == EOF || ch == '\n')
+                {
+                        buffer[pos++] = '\0';
+                        return buffer;
+                }
+                else
+                        buffer[pos++] = ch;
+                if (pos >= bufsize)
+                {
+                        bufsize *= MAX_BUF_LEN;
+                        buffer = (char *)realloc(buffer, bufsize);
+                        if (!buffer)
+                                 perror(RED "Buffer could not be declared " RESET);
+                }
+        }
 }

@@ -12,9 +12,18 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include<sys/types.h>
+#include <sys/types.h>
+ #include <sys/wait.h>
 #define MAX_BUF_LEN 1024
+#define append_str ">>"
 #define CMD_DELIMS " \t\n"
 #define home_sym '~'
+#define pipe_sym '|'
+#define input_redi_sym '<'
+#define output_redi_sym '>'
+#define input_redi_str "<"
+#define output_redi_str ">"
+#define pipe_str "|"
 #define RED "\033[0;31m"
 #define BLUE "\033[0;34m"
 #define YELLOW "\033[0;33m"
@@ -36,7 +45,7 @@ int run_cmd(char** cmd_tokens);
 void mod_curr_dir_rel(char* curr_dir);
 int cd_cmd(char** cmd_tokens, char* curr_dir, char* home_dir);
 int run_bg_cmd(char** cmd_tokens, int tokens);
-void echo(char** cmd_tokens, int tokens, char* cmd);
+int echo(char* line);
 void pwd(char** cmd_tokens);
 void get_prompt_vars();
 int pinfo(char** cmd_tokens);
@@ -45,11 +54,11 @@ int open_outfile();
 void normal_cmd(int tokens, char** cmd_tokens, char* copy);
 int check_for_pipe(char* cmd);
 void redi_and_pipi_cmd(char* cmd);
-void kjob(int tokens, char** cmd_tokens);
+void kjob(char** cmd_tokens);
 void overkill();
 void initializer();
 void signal_handler(int signum);
-void fg(int tokens, char** cmd_tokens);
+void fg(char** cmd_tokens);
 void normal_cmd(int tokens, char** cmd_tokens, char* cmd_copy);
 void redi_and_pipi_cmd(char* cmd);
 
