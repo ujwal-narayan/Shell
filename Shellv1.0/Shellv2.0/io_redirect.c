@@ -1,6 +1,6 @@
 /********************************** For input output redirection ***************************/
 
-#include "headers.h"
+#include "header.h"
 
 int open_infile() {
         int f = open(infile, O_RDONLY, S_IRWXU);

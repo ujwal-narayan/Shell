@@ -32,6 +32,7 @@ int parse_cmd_line(char* cmdline, char** cmds) {
                 cmds[num_cmds++] = token;
                 token = strtok(NULL, ";");
         }
+        cmds[num_cmds]='\0';
         return num_cmds;
 }
 

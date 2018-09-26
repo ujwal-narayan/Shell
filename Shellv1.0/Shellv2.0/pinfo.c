@@ -1,6 +1,6 @@
 /********************************** For implementing pinfo command *****************************************/
 
-#include "headers.h"
+#include "header.h"
 
 int pinfo(char **args)
 {

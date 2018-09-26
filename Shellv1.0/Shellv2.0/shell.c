@@ -1,36 +1,28 @@
-/**************************************************Main shell loop **************************************************/
 
-#include "headers.h"
+#include "header.h"
 
+void sig_init()
+{
+        signal (SIGQUIT, SIG_IGN);                                 
+        signal (SIGTTIN, SIG_IGN);                                  
+        signal (SIGINT, SIG_IGN);                                   
+        signal (SIGTSTP, SIG_IGN); 
+        signal (SIGTTOU, SIG_IGN);
+}
 int main()
 {
         //Basic Setup
-        shell = STDERR_FILENO;                         /* FD for stderr */
+        shell = STDERR_FILENO;                         
 
-        num_jobs = 0;
-
-        input_cmd_tokens = malloc((sizeof(char)*MAX_BUF_LEN)*MAX_BUF_LEN);
-        output_cmd_tokens = malloc((sizeof(char)*MAX_BUF_LEN)*MAX_BUF_LEN);            /* Initialisations and allocations */
-
-        if(isatty(shell)) {                                                         /* test whether a stderr refers to a terminal */
-                while(tcgetpgrp(shell) != (shell_pgid = getpgrp()))                  /* if it does, send signal to make process \
-                                                                                 group or executable same as process group of stderr */
-                        kill(shell_pgid, SIGTTIN);                             /* SIGTTIN sets terminal input for background processes */
-        }
-                                  /* To ignore Ctrl z */
-
-        signal (SIGQUIT, SIG_IGN);                                   /* To ignore Ctrl \ */
-
-        signal (SIGTTIN, SIG_IGN);                                   /* To ignore background processes */
-        
        
 
-        signal (SIGINT, SIG_IGN);                                    /* To ignore Ctrl c */
 
-        signal (SIGTSTP, SIG_IGN); 
-        signal (SIGTTOU, SIG_IGN);
-
-        my_pid = my_pgid = getpid();                                 /* Set pgid of executable same as pid */
+        if(isatty(shell)) {
+                while(tcgetpgrp(shell) != (shell_pgid = getpgrp())) 
+                        kill(shell_pgid, SIGTTIN);  
+        }
+        sig_init();
+        my_pid = my_pgid = getpid();                                 
         setpgid(my_pid, my_pgid);
         tcsetpgrp(shell, my_pgid);                                   /* Give control of stderr to executable's process group */
         if (getcwd(home_dir,MAX_BUF_LEN)==NULL)
@@ -75,22 +67,24 @@ int main()
 
                 char** cmds = malloc((sizeof(char)*MAX_BUF_LEN)*MAX_BUF_LEN); // array of semi-colon separated commands
 
-                for(j = 0; j < MAX_BUF_LEN; j++) cmds[j] = '\0';
 
                 char* cmdline = read_cmdline(); // read command line
                 int num_cmds = parse_cmd_line(cmdline, cmds); // parse command line
 
                 for(i = 0; i < num_cmds; i++) {
-                        infile = outfile = NULL;
-                        is_bg = 0, num_pipe = 0;
+                        char** cmd_tokens = malloc((sizeof(char)*MAX_BUF_LEN)*MAX_BUF_LEN); // array of command tokens
                         char cmd_copy[MAX_BUF_LEN];
                         strcpy(cmd_copy,cmds[i]);
+                        infile = outfile = NULL;
+                        for(j = 0; j < MAX_BUF_LEN; j++) cmd_tokens[j] = '\0';
+                        is_bg = 0, num_pipe = 0;
+                        
                         
 
-                        char** cmd_tokens = malloc((sizeof(char)*MAX_BUF_LEN)*MAX_BUF_LEN); // array of command tokens
-                        for(j = 0; j < MAX_BUF_LEN; j++) cmd_tokens[j] = '\0';
+                       
+                       
 
-                        if(check_for_pipe(cmd_copy) == -1) {
+                        if(check_for_pipe(cmd_copy) < 0) {
                                 if(input_redi == 1 || output_redi == 1) normal_cmd(parse_for_redi(cmd_copy, cmd_tokens), cmd_tokens, cmd_copy);
                                 else {
                                         int tokens = parse_cmd(cmd_copy, cmd_tokens);
