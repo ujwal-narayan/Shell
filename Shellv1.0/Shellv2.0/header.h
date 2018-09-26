@@ -54,11 +54,11 @@ int open_outfile();
 void normal_cmd(int tokens, char** cmd_tokens, char* copy);
 int check_for_pipe(char* cmd);
 void redi_and_pipi_cmd(char* cmd);
-void kjob(char** cmd_tokens);
+int kjob(char** cmd_tokens);
 void overkill();
 void initializer();
 void signal_handler(int signum);
-void fg(char** cmd_tokens);
+int fg(char** cmd_tokens);
 void normal_cmd(int tokens, char** cmd_tokens, char* cmd_copy);
 void redi_and_pipi_cmd(char* cmd);
 

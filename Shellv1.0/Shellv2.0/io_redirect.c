@@ -1,26 +1,25 @@
-/********************************** For input output redirection ***************************/
 
 #include "header.h"
 
-int open_infile() {
-        int f = open(infile, O_RDONLY, S_IRWXU);
-        if (f < 0) {
-                perror(infile);
-                
-        }
-        dup2(f, STDIN_FILENO);
-        close(f);
-        return f;
-}
 
 int open_outfile() {
-        int f;
-        if(last == 1) f = open(outfile, O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
-        else if(last == 2) f = open(outfile, O_CREAT | O_WRONLY | O_APPEND, S_IRWXU);
-        if(f < 0) {
-                perror(outfile);
+        int files;
+        if(last == 2) files = open(outfile, O_CREAT | O_WRONLY | O_APPEND, S_IRWXU);
+        if(last == 1) files = open(outfile, O_CREAT | O_WRONLY | O_TRUNC, S_IRWXU);
+        if(files < 0) {
+                perror( RED "Error with output" RESET);
         }
-        dup2(f, STDOUT_FILENO);
-        close(f);
-        return f;
+        dup2(files, STDOUT_FILENO);
+        close(files);
+        return files;
+}
+int open_infile() {
+        int files = open(infile, O_RDONLY, S_IRWXU);
+        if (files < 0) {
+                perror(RED "Error with input" RESET);
+                
+        }
+        dup2(files, STDIN_FILENO);
+        close(files);
+        return files;
 }

@@ -96,31 +96,41 @@ int echo(char *line)
 }
 
 
-void pwd(char** cmd_tokens) {
-        if(cmd_tokens[1] == NULL) printf("%s\n", curr_dir);
-        else run_cmd(cmd_tokens);
+void pwd(char** args) {
+        printf("%s\n", curr_dir);
 }
 
 void jobs() {
         int i;
         for(i = 0; i < num_jobs ; i++) {
-                if(table[i].active == 1) {
+                if(table[i].active) {
                         printf("[%d] %s [%d]\n", i, table[i].name, table[i].pid);
                 }
         }
 }
 
-void kjob(char** cmd_tokens) {
-        if(cmd_tokens[0] == NULL || cmd_tokens[1] == NULL || cmd_tokens[2] == NULL) {
-                fprintf(stderr, "Invalid usage of kjob!\n");
-                return;
+int kjob(char** args) {
+        if(args[1] == NULL)
+        {
+                perror(RED "Insufficient args for killjobs. Please try again with the right syntax" RESET);
+                return 1;
         }
-        int job_num = atoi(cmd_tokens[1]);
-        if(table[job_num].active == 1) {
-                if(kill(table[job_num].pid, atoi(cmd_tokens[2])) < 0)                 /* For sending signal mentioned to job mentioned */
-                        fprintf(stderr, "Signal not sent!\n");
+        if(args[2]==NULL)
+        {
+                perror(RED "Insufficient args for killjobs. Please try again with the right syntax" RESET);
+                return 1;
         }
-        else fprintf(stderr, "Job not found\n");               
+       
+        int job_num = atoi(args[1]);
+        if(table[job_num].active ) {
+                if(kill(table[job_num].pid, atoi(args[2])) < 0)
+                        {perror(RED "Signal could not be sent \n" RESET);
+                        return 1;
+                        }
+                return 0;
+        }
+        perror(RED "Error 404 , job not found \n" RESET);
+        return 1;       
 }
 int remindme(char** args)
 {
@@ -142,43 +152,54 @@ int remindme(char** args)
     return 0;
 }
 
-void overkill() {
-        int i;
-        for(i = 0 ; i < num_jobs ; i++) {
-                if(table[i].active == 1) {
-                        if(kill(table[i].pid, SIGKILL) < 0)                           /* Kill all jobs */
-                                perror("Error killing process!\n");
+void overkill()
+ {
+        int i=0;
+        while(i<num_jobs)
+         {
+                if(table[i].active ) 
+                {
+                        if(kill(table[i].pid, SIGKILL) < 0) 
+                                perror( RED "Could not kill \n" RESET);
                 }
+                i++;
         }
 }
 
-void fg(char** cmd_tokens) {
-        if( cmd_tokens[0]==NULL || cmd_tokens[1] == NULL) {
-                fprintf(stderr, "Invalid usage of fg");
-                return;
+int fg(char** args) {
+        if( args[0]==NULL || args[1] == NULL) {
+                perror(RED "Not enough arguemts for fg . Check Syntax " RESET);
+                return 1;
         }       
 
-        int i, job_num = atoi(cmd_tokens[1]), status;
+        int i, job_num = atoi(args[1]), status;
         if(table[job_num].active == 0) {
-                printf("No such job exists\n");
-                return;
+                printf(RED "Error 404 Job not found \n" RESET);
+                return 1;
         }
-        if(table[job_num].active == 1) {
+        int error_present = 1;
+        if(table[job_num].active) {
                 int pid = table[job_num].pid, pgid;
-                pgid = getpgid(pid);                     /* get pgid of mentioned job */
-                tcsetpgrp(shell, pgid);                  /* Give control of shell's terminal to this process */
-
-                fgpid = pgid;                            /* Set this pgid as fg pgid */
-                if(killpg(pgid, SIGCONT) < 0)            /* Send signal to thid pgid to continue if stopped */
-                        perror("Can't get in foreground!\n");
-                waitpid(pid, &status, WUNTRACED);        /* Wait for this process, return even if it has stopped without trace */
-                if(!WIFSTOPPED(status)) {                /* returns true if the child process was stopped by delivery of a signal */
-                        table[job_num].active = 0;
+                pgid = getpgid(pid);
+                error_present=0;
+                tcsetpgrp(shell, pgid);
+                fgpid = pgid;
+                if(killpg(pgid, SIGCONT) < 0)
+                        {
+                                perror(RED "Cant bring it to forward\n" RESET);
+                                error_present =1 ;
+                        }
+                waitpid(pid, &status, WUNTRACED);
+                if(!WIFSTOPPED(status)) {
+                        table[job_num].active--;
                         fgpid = 0;
                 }
-                tcsetpgrp(shell, my_pid);                /* Give control of terminal back to the executable */
+                tcsetpgrp(shell, my_pid);
         }
-        else fprintf(stderr, "No job found\n");
+        else perror(RED "Error 404 Job not found \n" RESET );
+        if(error_present)
+                return 1;
+        return 0;
 }
 int clock(char **args)
 {

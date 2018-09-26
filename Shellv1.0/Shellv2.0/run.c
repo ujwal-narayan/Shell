@@ -1,17 +1,16 @@
-/********************************************** For running a command using fork and exec *********************************/
-
 #include "header.h"
+void signal_inti();
 
 int run_cmd(char** cmd_tokens) {
         pid_t pid;
         pid = fork();
         if(pid < 0) {
-                perror("Child Proc. not created\n");
+                perror(RED "The Child Process could not be created \n" RESET );
                 return -1; 
         }
         else if(pid==0) { 
                 int fin, fout;
-                setpgid(pid, pid);                               /* Assign pgid of process equal to its pid */
+                setpgid(pid, pid); 
                 
                 if(input_redi) {
                         fin = open_infile();
@@ -22,15 +21,8 @@ int run_cmd(char** cmd_tokens) {
                       if(fout == -1) _exit(-1);
                 }
 
-                if(is_bg == 0) tcsetpgrp(shell, getpid());        /* Assign terminal to this process if it is not background */
-
-                signal (SIGINT, SIG_DFL);                         /* Restore default signals in child process */
-                signal (SIGQUIT, SIG_DFL);
-                signal (SIGTSTP, SIG_DFL);
-                signal (SIGTTIN, SIG_DFL);
-                signal (SIGTTOU, SIG_DFL);
-                signal (SIGCHLD, SIG_DFL);
-                
+                if(!is_bg ) tcsetpgrp(shell, getpid());  
+                signal_inti();
                 int ret;
                 if((ret = execvp(cmd_tokens[0], cmd_tokens)) < 0) {
                         perror("Error executing command!\n");
@@ -59,7 +51,16 @@ int run_cmd(char** cmd_tokens) {
         }
 }
 
-
+void signal_inti()
+{
+                signal (SIGINT, SIG_DFL);
+                signal (SIGQUIT, SIG_DFL);
+                signal (SIGTSTP, SIG_DFL);
+                signal (SIGTTIN, SIG_DFL);
+                signal (SIGTTOU, SIG_DFL);
+                signal (SIGCHLD, SIG_DFL);
+                return ;
+}
 void add_proc(int pid, char* name) {
         table[num_jobs].pid = pid;
         table[num_jobs].name = strdup(name);
@@ -123,13 +124,11 @@ void redi_and_pipi_cmd(char* cmd) {
 
         char* copy = strdup(cmd);
         char* token;
-        int tok = 0;
-        token = strtok(copy, "|");
+        token = strtok(copy, pipe_str);
         while(token!= NULL) {
-                pipe_cmds[tok++] = token;
-                token = strtok(NULL, "|");
+                pipe_cmds[num_pipe++] = token;
+                token = strtok(NULL, pipe_str);
         }
-        num_pipe = tok;
 
         int* pipes = (int* )malloc(sizeof(int)*(2*(num_pipe - 1)));
 
