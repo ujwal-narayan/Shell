@@ -5,6 +5,7 @@
 
 #include<signal.h>
 #include<stdlib.h>
+#include<time.h>
 #include<stdio.h>
 #include<unistd.h>
 #include<string.h>
@@ -13,7 +14,11 @@
 #include <sys/stat.h>
 #include<sys/types.h>
 #include <sys/types.h>
- #include <sys/wait.h>
+#include <sys/wait.h>
+#include<grp.h>
+#include<dirent.h>
+#include<pwd.h>
+#include<stdint.h>
 #define MAX_BUF_LEN 1024
 #define append_str ">>"
 #define CMD_DELIMS " \t\n"
@@ -43,7 +48,7 @@ void set_prompt();
 void get_home_dir();
 int run_cmd(char** cmd_tokens);
 void mod_curr_dir_rel(char* curr_dir);
-int cd_cmd(char** cmd_tokens, char* curr_dir, char* home_dir);
+int cd(char** cmd_tokens);
 int run_bg_cmd(char** cmd_tokens, int tokens);
 int echo(char* line);
 void pwd(char** cmd_tokens);

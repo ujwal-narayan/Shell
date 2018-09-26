@@ -3,7 +3,7 @@
 #include "header.h"
 
 
-int cd_cmd(char **args , char* cwd , char* home_dir)
+int cd(char **args )
 {
     
     
@@ -103,12 +103,77 @@ void pwd(char** args) {
 void jobs() {
         int i;
         for(i = 0; i < num_jobs ; i++) {
-                if(table[i].active==1) {
+                if(table[i].active) {
                         printf("[%d] %s [%d]\n", i, table[i].name, table[i].pid);
                 }
         }
 }
+void setemv(char **args)
+{
+    if(args[1] == NULL || args[2] == NULL)
+        {
+                perror(RED "Too few args to setenv" RESET);
+                return;
+        }
+    char* val=args[2];
+    char* var=args[1];
+    setenv(val,var,1);
+    printf("%s\n",getenv(val));
+}
+void unsetemv(char **args)
+{
+    if(args[1]==NULL){
+        perror(RED "Too few args to unsetenv" RESET);
+        return;
 
+
+    }
+    char* var =args[1];
+    unsetenv(var);
+}
+void ls(char* opt){
+    char    perm[11];
+    char    *timestring;
+    int     a = 0;
+    int     l = 0;
+    DIR     *dir;
+    struct passwd   *pwd;
+    struct group    *grp;
+    struct dirent   *fil;
+    struct stat     stt;
+    if(opt && ((strlen(opt) == 2 && opt[1] == 'a') ||
+            (strlen(opt) == 3 && (opt[1] == 'a' || opt[2] == 'a'))))
+        a = 1;
+
+    if(opt && ((strlen(opt) == 2 && opt[1] == 'l') ||
+            (strlen(opt) == 3 && (opt[1] == 'l' || opt[2] == 'l'))))
+        l = 1;
+
+    dir = opendir(".");
+    if(dir == NULL){
+        strerror(errno);
+        return;
+    }
+
+    while((fil = readdir(dir)) != NULL){
+        if(a == 0 && fil->d_name[0] == '.') continue;
+
+        if(l){
+            lstat(fil->d_name, &stt);
+            pwd = getpwuid(stt.st_uid);
+            grp = getgrgid(stt.st_gid);
+            timestring = ctime(&stt.st_mtime);
+
+            timestring[strlen(timestring)-1] = '\0';
+            
+            filePermissionDisplay(stt, perm);
+            printf("%s %d\t %s\t %s\t %jd\t", perm, (int)stt.st_nlink, pwd->pw_name, grp->gr_name, (intmax_t)stt.st_size);
+            printf("%s\t", timestring+4);
+            printf("%s\n", fil->d_name);
+        }
+        else printf("%s\n", fil->d_name);
+    }
+}
 int kjob(char** args) {
         if(args[1] == NULL)
         {
@@ -122,7 +187,7 @@ int kjob(char** args) {
         }
        
         int job_num = atoi(args[1]);
-        if(table[job_num].active==1 ) {
+        if(table[job_num].active ) {
                 if(kill(table[job_num].pid, atoi(args[2])) < 0)
                         {perror(RED "Signal could not be sent \n" RESET);
                         return 1;
@@ -157,7 +222,7 @@ void overkill()
         int i=0;
         while(i<num_jobs)
          {
-                if(table[i].active ==1) 
+                if(table[i].active ) 
                 {
                         if(kill(table[i].pid, SIGKILL) < 0) 
                                 perror( RED "Could not kill \n" RESET);
@@ -178,7 +243,7 @@ int fg(char** args) {
                 return 1;
         }
         int error_present = 1;
-        if(table[job_num].active == 1) {
+        if(table[job_num].active) {
                 int pid = table[job_num].pid, pgid;
                 pgid = getpgid(pid);
                 error_present=0;
@@ -191,9 +256,8 @@ int fg(char** args) {
                         }
                 waitpid(pid, &status, WUNTRACED);
                 if(!WIFSTOPPED(status)) {
+                        table[job_num].active--;
                         fgpid = 0;
-                        table[job_num].active=0 ;
-                        
                 }
                 tcsetpgrp(shell, my_pid);
         }
@@ -202,7 +266,7 @@ int fg(char** args) {
                 return 1;
         return 0;
 }
-int clock(char **args)
+int clck(char **args)
 {
    if (args[1] == NULL)
         return 0;
@@ -212,7 +276,7 @@ int clock(char **args)
 
     if (status == NULL)
     {
-        perror (RED "Clock file open error" RESET);
+        perror (RED "clck file open error" RESET);
         return 1;
     }
     int  i = 0,num;
@@ -223,7 +287,7 @@ int clock(char **args)
         status = fopen(path,"r");
         if ( status== NULL)
         {
-        perror (RED "Clock file open error" RESET);
+        perror (RED "clck file open error" RESET);
         return 1;
         }
         

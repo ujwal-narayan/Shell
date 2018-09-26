@@ -116,3 +116,18 @@ char *readLine()
                 }
         }
 }
+void filePermissionDisplay(struct stat stt, char* tmp){
+    int i = 0;
+    memset(tmp, '-', 10);
+    tmp[10] = '\0';
+    if(++i && S_ISDIR(stt.st_mode)) tmp[i-1] = 'd';
+    if(++i && stt.st_mode & S_IRUSR) tmp[i-1] = 'r';
+    if(++i && stt.st_mode & S_IWUSR) tmp[i-1] = 'w';
+    if(++i && stt.st_mode & S_IXUSR) tmp[i-1] = 'x';
+    if(++i && stt.st_mode & S_IRGRP) tmp[i-1] = 'r';
+    if(++i && stt.st_mode & S_IWGRP) tmp[i-1] = 'w';
+    if(++i && stt.st_mode & S_IXGRP) tmp[i-1] = 'x';
+    if(++i && stt.st_mode & S_IROTH) tmp[i-1] = 'r';
+    if(++i && stt.st_mode & S_IWOTH) tmp[i-1] = 'w';
+    if(++i && stt.st_mode & S_IXOTH) tmp[i-1] = 'x';
+}
