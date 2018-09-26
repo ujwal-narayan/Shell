@@ -103,7 +103,7 @@ void pwd(char** args) {
 void jobs() {
         int i;
         for(i = 0; i < num_jobs ; i++) {
-                if(table[i].active) {
+                if(table[i].active==1) {
                         printf("[%d] %s [%d]\n", i, table[i].name, table[i].pid);
                 }
         }
@@ -122,7 +122,7 @@ int kjob(char** args) {
         }
        
         int job_num = atoi(args[1]);
-        if(table[job_num].active ) {
+        if(table[job_num].active==1 ) {
                 if(kill(table[job_num].pid, atoi(args[2])) < 0)
                         {perror(RED "Signal could not be sent \n" RESET);
                         return 1;
@@ -157,7 +157,7 @@ void overkill()
         int i=0;
         while(i<num_jobs)
          {
-                if(table[i].active ) 
+                if(table[i].active ==1) 
                 {
                         if(kill(table[i].pid, SIGKILL) < 0) 
                                 perror( RED "Could not kill \n" RESET);
@@ -178,7 +178,7 @@ int fg(char** args) {
                 return 1;
         }
         int error_present = 1;
-        if(table[job_num].active) {
+        if(table[job_num].active == 1) {
                 int pid = table[job_num].pid, pgid;
                 pgid = getpgid(pid);
                 error_present=0;
@@ -191,8 +191,9 @@ int fg(char** args) {
                         }
                 waitpid(pid, &status, WUNTRACED);
                 if(!WIFSTOPPED(status)) {
-                        table[job_num].active--;
                         fgpid = 0;
+                        table[job_num].active=0 ;
+                        
                 }
                 tcsetpgrp(shell, my_pid);
         }
